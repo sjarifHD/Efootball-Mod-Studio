@@ -123,13 +123,14 @@ class ServersPage(QWidget):
         stads_dir = content_dir / "stadiums"
         balls_dir = content_dir / "balls"
 
-        kits_dir.mkdir(parents=True, exist_ok=True)
-        stads_dir.mkdir(parents=True, exist_ok=True)
-        balls_dir.mkdir(parents=True, exist_ok=True)
-
-        kit_entries = [p for p in kits_dir.iterdir() if p.is_dir()]
-        stad_entries = [p for p in stads_dir.iterdir() if p.is_dir()]
-        ball_entries = [p for p in balls_dir.iterdir() if p.is_dir() or p.is_file()]
+        kit_entries = stad_entries = ball_entries = []
+        if self.context.paths.ensure_content():
+            kits_dir.mkdir(parents=True, exist_ok=True)
+            stads_dir.mkdir(parents=True, exist_ok=True)
+            balls_dir.mkdir(parents=True, exist_ok=True)
+            kit_entries = [p for p in kits_dir.iterdir() if p.is_dir()]
+            stad_entries = [p for p in stads_dir.iterdir() if p.is_dir()]
+            ball_entries = [p for p in balls_dir.iterdir() if p.is_dir() or p.is_file()]
 
         self.metrics.set_metrics(
             (

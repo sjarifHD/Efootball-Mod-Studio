@@ -161,7 +161,8 @@ class ConfigurationService:
         return roots
 
     def list_mods(self) -> list[ModInfo]:
-        self.paths.content.mkdir(parents=True, exist_ok=True)
+        if not self.paths.ensure_content():
+            return []
         active_roots = self.active_roots()
         mods = []
         for directory in sorted(

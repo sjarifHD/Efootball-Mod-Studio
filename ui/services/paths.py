@@ -2,9 +2,31 @@ from __future__ import annotations
 
 import json
 import os
-import winreg
+import sys
 from dataclasses import dataclass
 from pathlib import Path
+
+try:
+    import winreg
+except ImportError:  # Non-Windows development environments such as WSL
+    winreg = None
+
+
+def app_root() -> Path:
+    """Return the folder holding sider.ini, dxgi.dll and bin/, in source and packaged runs."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parents[2]
+
+
+def _steam_registry_keys() -> list[tuple[int, str]]:
+    if winreg is None:
+        return []
+    return [
+        (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Valve\Steam"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam"),
+    ]
 
 
 def auto_detect_game_root() -> Path | None:
@@ -12,11 +34,7 @@ def auto_detect_game_root() -> Path | None:
     steam_path: Path | None = None
 
     # 1. Check Windows Registry for Steam
-    for hkey, subkey in [
-        (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam"),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Valve\Steam"),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam"),
-    ]:
+    for hkey, subkey in _steam_registry_keys():
         try:
             with winreg.OpenKey(hkey, subkey) as key:
                 val, _ = winreg.QueryValueEx(key, "SteamPath")
@@ -80,7 +98,7 @@ class WorkspacePaths:
 
     @classmethod
     def discover(cls) -> WorkspacePaths:
-        repository = Path(__file__).resolve().parents[2]
+        repository = app_root()
         settings_file = repository / ".workspace" / "settings.json"
 
         saved_game_root = None
@@ -204,7 +222,17 @@ class WorkspacePaths:
     def is_dll_installed(self) -> bool:
         return self.game_dll.is_file()
 
+    def ensure_content(self) -> bool:
+        """Create the content folder, or return False until a usable game folder is set."""
+        if self.custom_content is None and not self.game_root.is_dir():
+            return False
+        try:
+            self.content.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            return False
+        return True
+
     def ensure_workspace(self) -> None:
-        self.content.mkdir(parents=True, exist_ok=True)
+        self.ensure_content()
         self.database_workspace.mkdir(parents=True, exist_ok=True)
         self.ui_artifacts.mkdir(parents=True, exist_ok=True)

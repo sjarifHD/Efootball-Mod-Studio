@@ -23,7 +23,7 @@ efootball-mod-studio = "ui.app:main"
 efootball-sider = "ui.app:main"
 
 [project.optional-dependencies]
-dev = ["ruff>=0.9.0"]
+dev = ["pyinstaller>=6.11.0", "ruff>=0.9.0"]
 
 [tool.setuptools.packages.find]
 include = ["ui*"]
