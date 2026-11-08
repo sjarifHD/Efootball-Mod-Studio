@@ -147,6 +147,13 @@ class TestConfigurationService(unittest.TestCase):
         paths.ensure_workspace()
         self.assertTrue(paths.database_workspace.is_dir())
 
+    def test_root_dll_prefers_packaged_native_folder(self):
+        root = Path(self.temp.name)
+        self.assertEqual(self.paths.root_dll, root / "dxgi.dll")
+        (root / "native").mkdir()
+        (root / "native" / "dxgi.dll").write_bytes(b"")
+        self.assertEqual(self.paths.root_dll, root / "native" / "dxgi.dll")
+
     def test_mod_zip_rejects_path_traversal(self):
         archive_path = Path(self.temp.name) / "unsafe.zip"
         with zipfile.ZipFile(archive_path, "w") as archive:

@@ -10,6 +10,7 @@ import sys
 from build_release import ROOT, VERSION, sha256
 
 NAME = "eFootball_Mod_Studio"
+DLL_PATH = "native/dxgi.dll"
 WORK = ROOT / ".workspace" / "pyinstaller"
 OUTPUT = ROOT / "dist" / NAME
 ROOT_FILES = (
@@ -57,7 +58,9 @@ def main() -> int:
 
     for filename in ROOT_FILES:
         shutil.copy2(ROOT / filename, OUTPUT / filename)
-    shutil.copy2(built_dll, OUTPUT / "dxgi.dll")
+    # Never place dxgi.dll beside the executable: Windows would load it into Mod Studio itself.
+    (OUTPUT / "native").mkdir(exist_ok=True)
+    shutil.copy2(built_dll, OUTPUT / DLL_PATH)
     shutil.copytree(ROOT / "bin", OUTPUT / "bin", dirs_exist_ok=True)
     (OUTPUT / "scripts").mkdir(exist_ok=True)
     shutil.copy2(ROOT / "scripts" / "resolve_game_dir.bat", OUTPUT / "scripts")
@@ -65,7 +68,7 @@ def main() -> int:
     manifest = {
         "name": "eFootball Mod Studio",
         "version": VERSION,
-        "native_core": {"file": "dxgi.dll", "sha256": sha256(OUTPUT / "dxgi.dll")},
+        "native_core": {"file": DLL_PATH, "sha256": sha256(OUTPUT / DLL_PATH)},
     }
     (OUTPUT / "release-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(f"Created {OUTPUT}")

@@ -87,8 +87,8 @@ jobs:
       shell: pwsh
       run: |
         $shot = Join-Path $env:RUNNER_TEMP "exe-smoke.png"
-        $args = "--screenshot `"$shot`" --page overview --width 1280 --height 800"
-        $process = Start-Process -FilePath "dist/eFootball_Mod_Studio/eFootball_Mod_Studio.exe" -ArgumentList $args -Wait -PassThru
+        $arguments = "--screenshot `"$shot`" --page overview --width 1280 --height 800"
+        $process = Start-Process -FilePath "dist/eFootball_Mod_Studio/eFootball_Mod_Studio.exe" -ArgumentList $arguments -Wait -PassThru
         if ($process.ExitCode -ne 0) { throw "Executable exited with code $($process.ExitCode)" }
         if (-not (Test-Path $shot)) { throw "Executable did not render a screenshot" }
 

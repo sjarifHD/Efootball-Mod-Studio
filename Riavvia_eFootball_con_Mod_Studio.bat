@@ -25,6 +25,7 @@ echo 2. Copia dei file Mod Studio aggiornati...
 rem %GAME_DIR% is the Win64 binaries folder; the game root is three levels up.
 for %%I in ("%GAME_DIR%\..\..\..") do set "GAME_ROOT=%%~fI"
 set "SIDER_DLL=%~dp0dxgi.dll"
+if exist "%~dp0native\dxgi.dll" set "SIDER_DLL=%~dp0native\dxgi.dll"
 if exist "%~dp0rust_sider\target\release\dxgi.dll" set "SIDER_DLL=%~dp0rust_sider\target\release\dxgi.dll"
 copy /Y "%SIDER_DLL%" "%GAME_DIR%\dxgi.dll"
 if exist "modstudio.ini" copy /Y "modstudio.ini" "%GAME_DIR%\modstudio.ini"

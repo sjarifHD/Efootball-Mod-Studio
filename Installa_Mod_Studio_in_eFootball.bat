@@ -26,6 +26,7 @@ echo.
 
 echo [1/3] Installazione modulo DirectX (dxgi.dll)...
 set "SIDER_DLL=%~dp0dxgi.dll"
+if exist "%~dp0native\dxgi.dll" set "SIDER_DLL=%~dp0native\dxgi.dll"
 if exist "%~dp0rust_sider\target\release\dxgi.dll" set "SIDER_DLL=%~dp0rust_sider\target\release\dxgi.dll"
 if not exist "%SIDER_DLL%" (
     echo [ERRORE] dxgi.dll non trovato. Esegui cargo build --release in rust_sider.

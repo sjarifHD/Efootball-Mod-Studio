@@ -185,7 +185,8 @@ class WorkspacePaths:
 
     @property
     def root_dll(self) -> Path:
-        return self.repository / "dxgi.dll"
+        packaged = self.repository / "native" / "dxgi.dll"
+        return packaged if packaged.is_file() else self.repository / "dxgi.dll"
 
     @property
     def built_dll(self) -> Path:
