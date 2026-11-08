@@ -3,6 +3,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest import mock
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -94,7 +95,12 @@ class TestQtApplication(unittest.TestCase):
         self.assertIn("sync_state", pak_col_names)
 
         # Trigger sync_all_to_mods when no compatible packages exist - should show banner
-        mods_page.sync_all_to_mods()
+        builder = window.context.zen_builder
+        with (
+            mock.patch.object(builder, "is_available", return_value=True),
+            mock.patch.object(builder, "find_compatible_content_packages", return_value=[]),
+        ):
+            mods_page.sync_all_to_mods()
         self.assertIn("Nessun pacchetto", mods_page.banner.label.text())
         window.close()
 
@@ -132,6 +138,21 @@ class TestConfigurationService(unittest.TestCase):
         self.assertIn('cpk.root = "content\\B"', text)
         self.assertEqual(len(self.service.active_roots()), 2)
         self.assertAlmostEqual(self.service.read_camera().height, 1.32)
+
+    def test_ensure_workspace_tolerates_unavailable_game_folder(self):
+        root = Path(self.temp.name)
+        blocked = root / "not-a-directory"
+        blocked.write_text("", encoding="utf-8")
+        paths = WorkspacePaths(repository=root, game_root=blocked)
+        paths.ensure_workspace()
+        self.assertTrue(paths.database_workspace.is_dir())
+
+    def test_root_dll_prefers_packaged_native_folder(self):
+        root = Path(self.temp.name)
+        self.assertEqual(self.paths.root_dll, root / "dxgi.dll")
+        (root / "native").mkdir()
+        (root / "native" / "dxgi.dll").write_bytes(b"")
+        self.assertEqual(self.paths.root_dll, root / "native" / "dxgi.dll")
 
     def test_mod_zip_rejects_path_traversal(self):
         archive_path = Path(self.temp.name) / "unsafe.zip"

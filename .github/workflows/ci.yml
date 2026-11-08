@@ -5,6 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build_and_test:
@@ -25,7 +26,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install ruff
+        pip install ruff pyinstaller
 
     - name: Lint Modular Python Application
       run: |
@@ -62,3 +63,37 @@ jobs:
       with:
         name: eFootball_Mod_Studio_Release
         path: dist/eFootball_Mod_Studio.zip
+
+    - name: Download Verified retoc
+      shell: pwsh
+      run: |
+        $zip = Join-Path $env:RUNNER_TEMP "retoc.zip"
+        $dir = Join-Path $env:RUNNER_TEMP "retoc"
+        Invoke-WebRequest -Uri "https://github.com/trumank/retoc/releases/download/v0.1.5/retoc_cli-x86_64-pc-windows-msvc.zip" -OutFile $zip
+        if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne "cc036b06ad3bdcf7003690b00d82719980c374e48a95bf0654f9959148d263aa") { throw "retoc checksum mismatch" }
+        Expand-Archive $zip -DestinationPath $dir
+        Copy-Item (Join-Path $dir "retoc.exe") bin/retoc.exe
+        Copy-Item (Join-Path $dir "LICENSE") bin/retoc-LICENSE.txt
+        $help = & bin/retoc.exe to-zen --help | Out-String
+        if ($help -notmatch "--version") { throw "retoc to-zen does not support --version" }
+
+    - name: Build Standalone Windows Executable
+      run: python scripts/build_exe.py
+
+    - name: Smoke Test Standalone Executable
+      timeout-minutes: 3
+      env:
+        QT_QPA_PLATFORM: offscreen
+      shell: pwsh
+      run: |
+        $shot = Join-Path $env:RUNNER_TEMP "exe-smoke.png"
+        $arguments = "--screenshot `"$shot`" --page overview --width 1280 --height 800"
+        $process = Start-Process -FilePath "dist/eFootball_Mod_Studio/eFootball_Mod_Studio.exe" -ArgumentList $arguments -Wait -PassThru
+        if ($process.ExitCode -ne 0) { throw "Executable exited with code $($process.ExitCode)" }
+        if (-not (Test-Path $shot)) { throw "Executable did not render a screenshot" }
+
+    - name: Upload Standalone Windows Build
+      uses: actions/upload-artifact@v4
+      with:
+        name: eFootball_Mod_Studio_Windows
+        path: dist/eFootball_Mod_Studio/

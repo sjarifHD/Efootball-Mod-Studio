@@ -6,6 +6,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
+from .paths import app_root
+
 EFOOTBALL_AES_KEY = "0x4552D45005DFE94964893F4925EC747D3D591401E060ED8B3D58BE5721C81295"
 
 
@@ -162,7 +164,7 @@ def check_package_sync_info(
 
 class ZenBuilderService:
     def __init__(self, retoc_exe: Path | None = None, stub_pak: Path | None = None) -> None:
-        base_dir = Path(__file__).resolve().parent.parent.parent
+        base_dir = app_root()
         self.retoc_exe = retoc_exe or (base_dir / "bin" / "retoc.exe")
         self.stub_pak = stub_pak or (base_dir / "bin" / "stub_template.pak")
 
